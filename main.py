@@ -59,11 +59,10 @@ fig1 = px.pie(
     names='장르',
     values='영화편수',
     title="대표 장르별 영화 편수 비중",
-    hole=0.4,  # 도넛 형태 지정
+    hole=0.4,
     color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
-# 툴팁 및 표시 레이블 설정 (편수와 비율 표시)
 fig1.update_traces(
     textinfo='label+percent',
     hovertemplate="<b>장르:</b> %{label}<br><b>영화 편수:</b> %{value}편<br><b>비율:</b> %{percent}<extra></extra>"
@@ -77,7 +76,6 @@ fig1.update_layout(
 
 st.plotly_chart(fig1, use_container_width=True)
 
-# 메모/인사이트 입력 세션 관리
 if 'note_1' not in st.session_state:
     st.session_state.note_1 = ""
 
@@ -95,10 +93,34 @@ st.markdown("---")
 
 
 # -----------------------------------------------------------------------------
-# 구역 2: 개봉 첫 주 관객과 총 관객의 관계 (추가 예정)
+# 구역 2: 장르 및 영화별 총 관객 수 분포 (트리맵)
 # -----------------------------------------------------------------------------
-st.header("📌 구역 2: 개봉 첫 주 관객 vs 총 관객 수 산점도 (예정)")
-st.caption("※ 향후 개봉 첫 주 관객 수가 최종 관객 수에 미치는 영향을 분석하는 산점도 그래프가 들어갈 자리입니다.")
+st.header("📌 구역 2: 장르별 영화 총 관객 수 분포")
+
+# 총 관객 수 데이터가 있는 데이터만 필터링
+treemap_df = df.dropna(subset=['total_audi', 'genre_first', 'movieNm']).copy()
+
+# Plotly 트리맵 그래프 생성
+fig2 = px.treemap(
+    treemap_df,
+    path=[px.Constant("전체 장르"), 'genre_first', 'movieNm'],
+    values='total_audi',
+    color='genre_first',
+    title="장르 및 영화별 총 관객 수 (칸 크기 = 총 관객 수)",
+    color_discrete_sequence=px.colors.qualitative.Set3
+)
+
+# 마우스오버 툴팁 설정 (영화명, 총 관객 수 표시)
+fig2.update_traces(
+    hovertemplate="<b>영화명/구분:</b> %{label}<br><b>총 관객 수:</b> %{value:,}명<extra></extra>"
+)
+
+fig2.update_layout(
+    margin=dict(l=20, r=20, t=50, b=20),
+    height=600
+)
+
+st.plotly_chart(fig2, use_container_width=True)
 
 if 'note_2' not in st.session_state:
     st.session_state.note_2 = ""
@@ -107,7 +129,7 @@ user_input_2 = st.text_area(
     "💡 이 그래프로 알 수 있는 것 (직접 입력):",
     value=st.session_state.note_2,
     key="input_2",
-    placeholder="인사이트를 기록하세요..."
+    placeholder="예: 특정 장르 내에서 흥행을 주도한 대표 영화와 관객 수 비중을 한눈에 비교할 수 있습니다..."
 )
 if st.button("💾 구역 2 메모 저장", key="btn_2"):
     st.session_state.note_2 = user_input_2
@@ -117,7 +139,7 @@ st.markdown("---")
 
 
 # -----------------------------------------------------------------------------
-# 구역 3: 제작 국가별 스크린 수 및 흥행 분포 (추가 예정)
+# 구역 3: 제작 국가별 흥행 지표 분포 (추가 예정)
 # -----------------------------------------------------------------------------
 st.header("📌 구역 3: 제작 국가별 흥행 지표 분포 (예정)")
 st.caption("※ 향후 제작 국가에 따른 상영 스크린 수 및 TOP 10 유지 기간 분포 그래프가 들어갈 자리입니다.")
