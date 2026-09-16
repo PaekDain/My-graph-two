@@ -97,10 +97,8 @@ st.markdown("---")
 # -----------------------------------------------------------------------------
 st.header("📌 구역 2: 장르별 영화 총 관객 수 분포")
 
-# 총 관객 수 데이터가 있는 데이터만 필터링
 treemap_df = df.dropna(subset=['total_audi', 'genre_first', 'movieNm']).copy()
 
-# Plotly 트리맵 그래프 생성
 fig2 = px.treemap(
     treemap_df,
     path=[px.Constant("전체 장르"), 'genre_first', 'movieNm'],
@@ -110,7 +108,6 @@ fig2 = px.treemap(
     color_discrete_sequence=px.colors.qualitative.Set3
 )
 
-# 마우스오버 툴팁 설정 (영화명, 총 관객 수 표시)
 fig2.update_traces(
     hovertemplate="<b>영화명/구분:</b> %{label}<br><b>총 관객 수:</b> %{value:,}명<extra></extra>"
 )
@@ -139,10 +136,43 @@ st.markdown("---")
 
 
 # -----------------------------------------------------------------------------
-# 구역 3: 제작 국가별 흥행 지표 분포 (추가 예정)
+# 구역 3: 총 관객 수 분포 (히스토그램)
 # -----------------------------------------------------------------------------
-st.header("📌 구역 3: 제작 국가별 흥행 지표 분포 (예정)")
-st.caption("※ 향후 제작 국가에 따른 상영 스크린 수 및 TOP 10 유지 기간 분포 그래프가 들어갈 자리입니다.")
+st.header("📌 구역 3: 총 관객 수 히스토그램")
+
+hist_df = df.dropna(subset=['total_audi']).copy()
+
+# 가장 관객 수가 많은 영화 계산
+top_movie_row = hist_df.loc[hist_df['total_audi'].idxmax()]
+top_movie_name = top_movie_row['movieNm']
+top_movie_audi = int(top_movie_row['total_audi'])
+
+# Plotly 히스토그램 생성
+fig3 = px.histogram(
+    hist_df,
+    x='total_audi',
+    nbins=30,
+    title="영화별 총 관객 수 분포",
+    labels={'total_audi': '총 관객 수 (명)'},
+    color_discrete_sequence=['#2E86C1']
+)
+
+fig3.update_traces(
+    hovertemplate="<b>총 관객 수 구간:</b> %{x}명<br><b>영화 수:</b> %{y}편<extra></extra>"
+)
+
+fig3.update_layout(
+    xaxis_title="총 관객 수 (명)",
+    yaxis_title="영화 수 (편)",
+    margin=dict(l=20, r=20, t=50, b=20),
+    height=450
+)
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# 그래프 하단 정보 문구
+st.write(f"📊 **대부분의 영화가 몰려 있는 구간:** 약 100만 명 미만 구간에 대부분의 개봉작이 집중되어 있습니다.")
+st.write(f"🏆 **가장 관객이 많은 영화:** **{top_movie_name}** ({top_movie_audi:,}명)")
 
 if 'note_3' not in st.session_state:
     st.session_state.note_3 = ""
@@ -151,7 +181,7 @@ user_input_3 = st.text_area(
     "💡 이 그래프로 알 수 있는 것 (직접 입력):",
     value=st.session_state.note_3,
     key="input_3",
-    placeholder="인사이트를 기록하세요..."
+    placeholder="예: 대다수 영화가 소형 관객 구간에 밀집되어 있으며, 대형 흥행작은 소수에 불과한 롱테일 분포를 파악할 수 있습니다..."
 )
 if st.button("💾 구역 3 메모 저장", key="btn_3"):
     st.session_state.note_3 = user_input_3
