@@ -194,7 +194,6 @@ st.header("📌 구역 4: 개봉일 스크린 수 vs 총 관객 수 산점도")
 
 scatter_df = df.dropna(subset=['first_scrn', 'total_audi', 'genre_first', 'movieNm']).copy()
 
-# Plotly 산점도 그래프 생성
 fig4 = px.scatter(
     scatter_df,
     x='first_scrn',
@@ -210,7 +209,6 @@ fig4 = px.scatter(
     color_discrete_sequence=px.colors.qualitative.Vivid
 )
 
-# 마우스오버 툴팁 서식 설정
 fig4.update_traces(
     marker=dict(size=9, opacity=0.8),
     hovertemplate="<b>영화명: %{hovertext}</b><br>장르: %{fullData.name}<br>개봉일 스크린 수: %{x:,}개<br>총 관객 수: %{y:,}명<extra></extra>"
@@ -237,3 +235,61 @@ user_input_4 = st.text_area(
 if st.button("💾 구역 4 메모 저장", key="btn_4"):
     st.session_state.note_4 = user_input_4
     st.success("구역 4 인사이트 메모가 저장되었습니다!")
+
+st.markdown("---")
+
+
+# -----------------------------------------------------------------------------
+# 구역 5: 주요 장르별 총 관객 수 박스플롯 (상자 그림)
+# -----------------------------------------------------------------------------
+st.header("📌 구역 5: 주요 장르별 총 관객 수 박스플롯")
+
+# 영화가 10편 이상인 장르만 필터링
+genre_counts_series = df['genre_first'].value_counts()
+top_genres = genre_counts_series[genre_counts_series >= 10].index.tolist()
+
+box_df = df[df['genre_first'].isin(top_genres)].dropna(subset=['total_audi', 'movieNm']).copy()
+
+# Plotly 박스플롯 생성
+fig5 = px.box(
+    box_df,
+    x='genre_first',
+    y='total_audi',
+    color='genre_first',
+    hover_name='movieNm',
+    points='outliers',  # 상자 밖 아웃라이어(이상치) 점 표시
+    title="영화 10편 이상 장르의 총 관객 수 분포 (아웃라이어 포함)",
+    labels={
+        'genre_first': '장르',
+        'total_audi': '총 관객 수 (명)'
+    },
+    color_discrete_sequence=px.colors.qualitative.Set2
+)
+
+# 아웃라이어 및 박스 호버 툴팁 서식 지정
+fig5.update_traces(
+    hovertemplate="<b>영화명: %{hovertext}</b><br>장르: %{x}<br>총 관객 수: %{y:,}명<extra></extra>"
+)
+
+fig5.update_layout(
+    xaxis_title="장르 (영화 10편 이상)",
+    yaxis_title="총 관객 수 (명)",
+    showlegend=False,
+    margin=dict(l=20, r=20, t=50, b=20),
+    height=550
+)
+
+st.plotly_chart(fig5, use_container_width=True)
+
+if 'note_5' not in st.session_state:
+    st.session_state.note_5 = ""
+
+user_input_5 = st.text_area(
+    "💡 이 그래프로 알 수 있는 것 (직접 입력):",
+    value=st.session_state.note_5,
+    key="input_5",
+    placeholder="예: 장르별 평균 관객 분포와 함께 상자 밖으로 튀어나온 메가 히트 아웃라이어 영화의 특성을 비교 분석할 수 있습니다..."
+)
+if st.button("💾 구역 5 메모 저장", key="btn_5"):
+    st.session_state.note_5 = user_input_5
+    st.success("구역 5 인사이트 메모가 저장되었습니다!")
