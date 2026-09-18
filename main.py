@@ -29,6 +29,10 @@ def load_data():
     if 'genre' in df.columns:
         df['genre_first'] = df['genre'].fillna('기타').astype(str).apply(lambda x: x.split('|')[0].strip())
 
+    # nation 열 결측치 처리
+    if 'nation' in df.columns:
+        df['nation'] = df['nation'].fillna('기타')
+
     # 수치형 데이터 형변환
     numeric_cols = ['first_scrn', 'first_show', 'first_week_audi', 'total_audi', 'days_in_top10']
     for col in numeric_cols:
@@ -358,13 +362,57 @@ st.markdown("---")
 
 
 # -----------------------------------------------------------------------------
+# 구역 7: 제작 국가 및 장르별 영화 편수 (선버스트 차트)
+# -----------------------------------------------------------------------------
+st.header("📌 구역 7: 제작 국가 및 장르별 영화 편수 구성")
+
+# 국가별, 장르별 영화 편수 집계
+sunburst_df = df.groupby(['nation', 'genre_first']).size().reset_index(name='movie_count')
+
+# Plotly 선버스트 차트 생성
+fig7 = px.sunburst(
+    sunburst_df,
+    path=['nation', 'genre_first'],
+    values='movie_count',
+    title="제작 국가 → 장르별 영화 편수 구성",
+    color='nation',
+    color_discrete_sequence=px.colors.qualitative.Pastel
+)
+
+fig7.update_traces(
+    hovertemplate="<b>구분:</b> %{label}<br><b>영화 편수:</b> %{value}편<extra></extra>"
+)
+
+fig7.update_layout(
+    margin=dict(l=20, r=20, t=50, b=20),
+    height=600
+)
+
+st.plotly_chart(fig7, use_container_width=True)
+
+if 'note_7' not in st.session_state:
+    st.session_state.note_7 = ""
+
+user_input_7 = st.text_area(
+    "💡 이 그래프로 알 수 있는 것 (직접 입력):",
+    value=st.session_state.note_7,
+    key="input_7",
+    placeholder="예: 각 제작 국가별로 어떤 장르의 영화가 주로 수입되거나 제작되었는지 편수 비중을 다층 구조로 계층적으로 파악할 수 있습니다..."
+)
+if st.button("💾 구역 7 메모 저장", key="btn_7"):
+    st.session_state.note_7 = user_input_7
+    st.success("구역 7 인사이트 메모가 저장되었습니다!")
+
+st.markdown("---")
+
+
+# -----------------------------------------------------------------------------
 # 구역 8: 사용자 자율 질문 분석 (10위권 유지 기간 vs 총 관객 수)
 # -----------------------------------------------------------------------------
 st.header("📌 구역 8: 10위권 유지 기간과 총 관객 수의 관계")
 
 df_q8 = df.dropna(subset=['days_in_top10', 'total_audi', 'movieNm', 'genre_first']).copy()
 
-# 산점도 생성
 fig8 = px.scatter(
     df_q8,
     x='days_in_top10',
