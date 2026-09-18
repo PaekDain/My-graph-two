@@ -49,11 +49,9 @@ except Exception as e:
 # -----------------------------------------------------------------------------
 st.header("📌 구역 1: 장르별 영화 편수 분포")
 
-# 장르별 영화 수 집계
 genre_counts = df['genre_first'].value_counts().reset_index()
 genre_counts.columns = ['장르', '영화편수']
 
-# Plotly 도넛 그래프 생성
 fig1 = px.pie(
     genre_counts,
     names='장르',
@@ -230,7 +228,7 @@ user_input_4 = st.text_area(
     "💡 이 그래프로 알 수 있는 것 (직접 입력):",
     value=st.session_state.note_4,
     key="input_4",
-    placeholder="예: 개봉일 스크린 수가 많을수록 총 관객 수도 증가하는 양의 상관관계가 있는지, 장르별 선점 차이가 있는지 분석할 수 있습니다..."
+    placeholder="예: 개봉일 스크린 수가 많을수록 총 관객 수도 증가하는 양의 상관관계가 있는지 분석할 수 있습니다..."
 )
 if st.button("💾 구역 4 메모 저장", key="btn_4"):
     st.session_state.note_4 = user_input_4
@@ -244,20 +242,18 @@ st.markdown("---")
 # -----------------------------------------------------------------------------
 st.header("📌 구역 5: 주요 장르별 총 관객 수 박스플롯")
 
-# 영화가 10편 이상인 장르만 필터링
 genre_counts_series = df['genre_first'].value_counts()
 top_genres = genre_counts_series[genre_counts_series >= 10].index.tolist()
 
 box_df = df[df['genre_first'].isin(top_genres)].dropna(subset=['total_audi', 'movieNm']).copy()
 
-# Plotly 박스플롯 생성
 fig5 = px.box(
     box_df,
     x='genre_first',
     y='total_audi',
     color='genre_first',
     hover_name='movieNm',
-    points='outliers',  # 상자 밖 아웃라이어(이상치) 점 표시
+    points='outliers',
     title="영화 10편 이상 장르의 총 관객 수 분포 (아웃라이어 포함)",
     labels={
         'genre_first': '장르',
@@ -266,7 +262,6 @@ fig5 = px.box(
     color_discrete_sequence=px.colors.qualitative.Set2
 )
 
-# 아웃라이어 및 박스 호버 툴팁 서식 지정
 fig5.update_traces(
     hovertemplate="<b>영화명: %{hovertext}</b><br>장르: %{x}<br>총 관객 수: %{y:,}명<extra></extra>"
 )
@@ -293,3 +288,126 @@ user_input_5 = st.text_area(
 if st.button("💾 구역 5 메모 저장", key="btn_5"):
     st.session_state.note_5 = user_input_5
     st.success("구역 5 인사이트 메모가 저장되었습니다!")
+
+st.markdown("---")
+
+
+# -----------------------------------------------------------------------------
+# 구역 6: 개봉일 및 영화별 종합 성과 버블 산점도
+# -----------------------------------------------------------------------------
+st.header("📌 구역 6: 개봉일 기준 영화별 종합 흥행 성과 분석")
+
+cols_needed = ['openDt', 'genre_first', 'nation', 'first_scrn', 'first_show', 'first_week_audi', 'total_audi', 'days_in_top10', 'movieNm']
+df_q6 = df.dropna(subset=cols_needed).copy()
+
+fig6 = px.scatter(
+    df_q6,
+    x='openDt',
+    y='total_audi',
+    size='first_week_audi',
+    color='genre_first',
+    hover_name='movieNm',
+    title="개봉일(X축) vs 총 관객 수(Y축) 버블 차트 (버블 크기 = 개봉 첫 주 관객 수)",
+    labels={
+        'openDt': '개봉일 (openDt)',
+        'total_audi': '총 관객 수 (total_audi, 명)',
+        'genre_first': '장르 (genre)',
+        'first_week_audi': '개봉 첫 주 관객 수'
+    },
+    color_discrete_sequence=px.colors.qualitative.Dark24
+)
+
+fig6.update_traces(
+    hovertemplate=(
+        "<b>영화명: %{hovertext}</b><br>"
+        "📅 개봉일(openDt): %{x|%Y-%m-%d}<br>"
+        "🎬 장르(genre): %{fullData.name}<br>"
+        "🌍 제작국가(nation): %{customdata[0]}<br>"
+        "📺 개봉일 스크린수(first_scrn): %{customdata[1]:,}개<br>"
+        "🎥 개봉일 상영횟수(first_show): %{customdata[2]:,}회<br>"
+        "🎟️ 개봉 첫 주 관객(first_week_audi): %{customdata[3]:,}명<br>"
+        "🍿 총 관객(total_audi): %{y:,}명<br>"
+        "🏆 10위권 머문 날수(days_in_top10): %{customdata[4]}일<extra></extra>"
+    ),
+    customdata=df_q6[['nation', 'first_scrn', 'first_show', 'first_week_audi', 'days_in_top10']]
+)
+
+fig6.update_layout(
+    xaxis_title="개봉일 (openDt)",
+    yaxis_title="총 관객 수 (total_audi, 명)",
+    margin=dict(l=20, r=20, t=50, b=20),
+    height=600
+)
+
+st.plotly_chart(fig6, use_container_width=True)
+
+if 'note_6' not in st.session_state:
+    st.session_state.note_6 = ""
+
+user_input_6 = st.text_area(
+    "💡 이 그래프로 알 수 있는 것 (직접 입력):",
+    value=st.session_state.note_6,
+    key="input_6",
+    placeholder="예: 개봉 시기별 흥행 규모와 개봉 첫 주 관객 수, 10위권 유지 기간 간의 종합적인 상관관계를 한눈에 시각화할 수 있습니다..."
+)
+if st.button("💾 구역 6 메모 저장", key="btn_6"):
+    st.session_state.note_6 = user_input_6
+    st.success("구역 6 인사이트 메모가 저장되었습니다!")
+
+st.markdown("---")
+
+
+# -----------------------------------------------------------------------------
+# 구역 8: 사용자 자율 질문 분석 (10위권 유지 기간 vs 총 관객 수)
+# -----------------------------------------------------------------------------
+st.header("📌 구역 8: 10위권 유지 기간과 총 관객 수의 관계")
+
+df_q8 = df.dropna(subset=['days_in_top10', 'total_audi', 'movieNm', 'genre_first']).copy()
+
+# 산점도 생성
+fig8 = px.scatter(
+    df_q8,
+    x='days_in_top10',
+    y='total_audi',
+    color='genre_first',
+    hover_name='movieNm',
+    title="10위권에 오래 머문 영화는 총 관객도 많은가",
+    labels={
+        'days_in_top10': '10위권에 머문 날수 (days_in_top10)',
+        'total_audi': '총 관객 수 (total_audi, 명)',
+        'genre_first': '장르'
+    },
+    color_discrete_sequence=px.colors.qualitative.Bold
+)
+
+fig8.update_traces(
+    marker=dict(size=9, opacity=0.8),
+    hovertemplate=(
+        "<b>영화명: %{hovertext}</b><br>"
+        "🏆 10위권 머문 날수: %{x}일<br>"
+        "🍿 총 관객 수: %{y:,}명<br>"
+        "🎬 장르: %{fullData.name}<extra></extra>"
+    )
+)
+
+fig8.update_layout(
+    xaxis_title="10위권에 머문 날수 (일)",
+    yaxis_title="총 관객 수 (명)",
+    margin=dict(l=20, r=20, t=50, b=20),
+    height=550
+)
+
+st.plotly_chart(fig8, use_container_width=True)
+
+if 'note_8' not in st.session_state:
+    st.session_state.note_8 = ""
+
+user_input_8 = st.text_area(
+    "💡 이 그래프로 알 수 있는 것 (직접 입력):",
+    value=st.session_state.note_8,
+    key="input_8",
+    placeholder="예: 10위권에 머문 일수가 길수록 총 관객 수도 비례하여 증가하는 뚜렷한 양의 상관관계를 확인할 수 있습니다..."
+)
+if st.button("💾 구역 8 메모 저장", key="btn_8"):
+    st.session_state.note_8 = user_input_8
+    st.success("구역 8 인사이트 메모가 저장되었습니다!")
